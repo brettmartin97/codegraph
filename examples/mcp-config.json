@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "codegraph": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "codegraph-mcp",
+        "python",
+        "-m",
+        "codegraph_mcp.server.mcp_server"
+      ]
+    }
+  }
+}

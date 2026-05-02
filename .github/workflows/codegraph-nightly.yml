@@ -1,0 +1,60 @@
+name: CodeGraph Nightly Reindex
+
+on:
+  schedule:
+    - cron: "0 2 * * *"   # 02:00 UTC every night
+  workflow_dispatch:       # also triggerable manually
+
+permissions:
+  contents: read
+
+jobs:
+  reindex:
+    name: Full reindex + boundary check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Restore CodeGraph DB
+        uses: actions/cache@v5
+        with:
+          path: ~/.codegraph
+          key: codegraph-nightly-${{ github.repository }}-${{ github.sha }}
+          restore-keys: |
+            codegraph-nightly-${{ github.repository }}-
+
+      - name: Install CodeGraph MCP
+        run: pip install "codegraph-mcp[full]" --quiet
+
+      - name: Full reindex
+        env:
+          CODEGRAPH_REPO_ROOT: ${{ github.workspace }}
+          CODEGRAPH_DB_PATH: ~/.codegraph/codegraph.db
+          CODEGRAPH_ALLOW_EXTERNAL_REPOS: "true"
+        run: |
+          codegraph repo add ${{ github.event.repository.name }} ${{ github.workspace }} || true
+          codegraph index ${{ github.event.repository.name }} --mode full
+
+      - name: Boundary check (if boundaries.yaml exists)
+        env:
+          CODEGRAPH_REPO_ROOT: ${{ github.workspace }}
+          CODEGRAPH_DB_PATH: ~/.codegraph/codegraph.db
+          CODEGRAPH_ALLOW_EXTERNAL_REPOS: "true"
+        run: |
+          if [ -f "${{ github.workspace }}/boundaries.yaml" ]; then
+            codegraph ci validate-boundaries ${{ github.event.repository.name }} \
+              --policy ${{ github.workspace }}/boundaries.yaml
+          else
+            echo "No boundaries.yaml found — skipping boundary check."
+          fi
+
+      - name: Print overview
+        env:
+          CODEGRAPH_REPO_ROOT: ${{ github.workspace }}
+          CODEGRAPH_DB_PATH: ~/.codegraph/codegraph.db
+          CODEGRAPH_ALLOW_EXTERNAL_REPOS: "true"
+        run: codegraph overview ${{ github.event.repository.name }} --json

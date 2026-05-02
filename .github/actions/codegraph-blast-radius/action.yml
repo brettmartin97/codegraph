@@ -1,0 +1,114 @@
+name: 'CodeGraph Blast Radius'
+description: 'Index the repo, compute call-site blast radius for changed functions, and post a PR comment.'
+author: 'CodeGraph MCP'
+branding:
+  icon: 'git-merge'
+  color: 'purple'
+
+inputs:
+  repo-name:
+    description: 'Logical name to register the repo under in CodeGraph'
+    required: false
+    default: ${{ github.event.repository.name }}
+  base-ref:
+    description: 'Git base ref to diff against'
+    required: false
+    default: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
+  head-ref:
+    description: 'Git head ref'
+    required: false
+    default: 'HEAD'
+  threshold:
+    description: 'Risk score above which functions are flagged as high-risk'
+    required: false
+    default: '0.65'
+  fail-on-high:
+    description: 'Fail the job if any function exceeds the risk threshold'
+    required: false
+    default: 'false'
+  python-version:
+    description: 'Python version for the CodeGraph runtime'
+    required: false
+    default: '3.11'
+  install-spec:
+    description: 'pip install target — defaults to the published package; override with a path or VCS spec'
+    required: false
+    default: 'codegraph-mcp'
+  comment-id-marker:
+    description: 'Hidden HTML marker used to find/update an existing PR comment'
+    required: false
+    default: '<!-- codegraph-blast-radius -->'
+
+outputs:
+  comment-path:
+    description: 'Path to the generated markdown comment'
+    value: ${{ steps.analyse.outputs.comment-path }}
+  high-risk-count:
+    description: 'Number of changed functions exceeding the risk threshold'
+    value: ${{ steps.analyse.outputs.high-risk-count }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install CodeGraph
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install "${{ inputs.install-spec }}"
+
+    - name: Ensure base ref is fetched
+      shell: bash
+      run: |
+        # PRs are fetched with depth=1 by default; we need history to diff.
+        git fetch --no-tags --prune --depth=200 origin "${{ inputs.base-ref }}" || true
+        git fetch --no-tags --prune --depth=200 origin "+refs/heads/${{ inputs.base-ref }}:refs/remotes/origin/${{ inputs.base-ref }}" || true
+
+    - name: Index repo
+      shell: bash
+      run: |
+        codegraph repo add "${{ inputs.repo-name }}" "${GITHUB_WORKSPACE}" || true
+        codegraph index "${{ inputs.repo-name }}" --mode full
+
+    - name: Compute blast radius
+      id: analyse
+      shell: bash
+      env:
+        BASE_REF: ${{ inputs.base-ref }}
+      run: |
+        # Resolve base ref — prefer remote tracking name when available.
+        if git rev-parse --verify "origin/${BASE_REF}" >/dev/null 2>&1; then
+          BASE="origin/${BASE_REF}"
+        else
+          BASE="${BASE_REF}"
+        fi
+        OUT="${RUNNER_TEMP}/codegraph-comment.md"
+        codegraph ci pr-comment "${{ inputs.repo-name }}" \
+          --base "${BASE}" --head "${{ inputs.head-ref }}" \
+          --threshold "${{ inputs.threshold }}" \
+          --out "${OUT}" \
+          --json > "${RUNNER_TEMP}/codegraph-result.json"
+        # Append the hidden marker so we can update the comment later.
+        printf '\n%s\n' "${{ inputs.comment-id-marker }}" >> "${OUT}"
+        echo "comment-path=${OUT}" >> "$GITHUB_OUTPUT"
+        HIGH=$(python -c "import json,sys; print(json.load(open('${RUNNER_TEMP}/codegraph-result.json')).get('high_risk_count', 0))")
+        echo "high-risk-count=${HIGH}" >> "$GITHUB_OUTPUT"
+        cat "${OUT}" >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Post / update PR comment
+      if: github.event_name == 'pull_request'
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        header: codegraph-blast-radius
+        path: ${{ steps.analyse.outputs.comment-path }}
+
+    - name: Fail on high risk
+      if: ${{ inputs.fail-on-high == 'true' && steps.analyse.outputs.high-risk-count != '0' }}
+      shell: bash
+      run: |
+        echo "::error::CodeGraph found ${{ steps.analyse.outputs.high-risk-count }} high-risk change(s)."
+        exit 1

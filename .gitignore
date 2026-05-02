@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.env
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Local data / artefacts
+/data/
+/repos/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite-journal
+codegraph.db
+codegraph.db-journal
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+!.vscode/mcp.json
+.idea/
+
+# Node (used only inside vscode-extension/)
+node_modules/
+vscode-extension/out/
+*.vsix
+
+# Logs
+*.log
+.venv-test

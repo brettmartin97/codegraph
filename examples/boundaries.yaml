@@ -1,0 +1,12 @@
+boundaries:
+  - name: api_to_service
+    allow:
+      - api -> services
+    deny:
+      - api -> repositories
+
+  - name: domain_purity
+    deny:
+      - domain -> infrastructure
+      - domain -> fastapi
+      - domain -> sqlalchemy

@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "codegraph": {
+      "command": "python",
+      "args": ["-m", "codegraph_mcp.server.mcp_server"],
+      "env": {
+        "CODEGRAPH_ALLOW_EXTERNAL_REPOS": "true"
+      }
+    }
+  },
+  "inputs": []
+}

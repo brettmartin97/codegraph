@@ -1,0 +1,139 @@
+{
+  "name": "codegraph-mcp",
+  "displayName": "CodeGraph MCP",
+  "description": "Blast-radius analysis and call-graph intelligence powered by CodeGraph MCP",
+  "version": "0.1.3",
+  "publisher": "codegraph",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brettmartin97/code-graph-mcp.git",
+    "directory": "vscode-extension"
+  },
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "keywords": ["code intelligence", "call graph", "impact analysis", "refactoring"],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:codegraph.indexWorkspace",
+    "onCommand:codegraph.refresh",
+    "onCommand:codegraph.showImpactForCurrent",
+    "onCommand:codegraph.openFunction"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "CodeGraph MCP",
+      "properties": {
+        "codegraph.repoName": {
+          "type": "string",
+          "default": "",
+          "description": "Deprecated alias for codegraph.repo."
+        },
+        "codegraph.repo": {
+          "type": "string",
+          "default": "",
+          "description": "Registered repo name (leave blank to auto-detect from workspace folder name)"
+        },
+        "codegraph.endpoint": {
+          "type": "string",
+          "default": "http://127.0.0.1:8811",
+          "description": "Base URL for the local CodeGraph REST API"
+        },
+        "codegraph.pythonPath": {
+          "type": "string",
+          "default": "",
+          "description": "Python executable that has codegraph-mcp installed. Leave blank to try python3, python, then py."
+        },
+        "codegraph.autoStartServer": {
+          "type": "boolean",
+          "default": true,
+          "description": "Start the local CodeGraph REST API automatically when VS Code starts"
+        },
+        "codegraph.autoIndexOnStart": {
+          "type": "boolean",
+          "default": true,
+          "description": "Register and index the workspace automatically when the extension starts"
+        },
+        "codegraph.hover.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show CodeGraph hover cards for indexed functions"
+        },
+        "codegraph.blastRadiusDepth": {
+          "type": "number",
+          "default": 2,
+          "description": "How many hops to follow when computing blast radius"
+        },
+        "codegraph.showInlineDecorations": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show caller-count inline decorations next to function definitions"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "codegraph.showImpactForCurrent",
+        "title": "CodeGraph: Show Impact for Function at Cursor",
+        "category": "CodeGraph"
+      },
+      {
+        "command": "codegraph.indexWorkspace",
+        "title": "CodeGraph: Index Workspace Repo",
+        "category": "CodeGraph"
+      },
+      {
+        "command": "codegraph.refresh",
+        "title": "CodeGraph: Refresh",
+        "category": "CodeGraph"
+      },
+      {
+        "command": "codegraph.openFunction",
+        "title": "CodeGraph: Open Function",
+        "category": "CodeGraph"
+      },
+      {
+        "command": "codegraph.runDoctor",
+        "title": "CodeGraph: Run Doctor",
+        "category": "CodeGraph"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "codegraph.showImpactForCurrent",
+          "when": "editorTextFocus",
+          "group": "codegraph"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "codegraph",
+          "title": "CodeGraph",
+          "icon": "media/codegraph.svg"
+        }
+      ]
+    },
+    "views": {
+      "codegraph": [
+        {
+          "id": "codegraph.functions",
+          "name": "Impact"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^6.0.3"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "codegraph": {
+      "command": "python3",
+      "args": ["-m", "codegraph_mcp.server.mcp_server"]
+    }
+  }
+}

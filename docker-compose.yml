@@ -1,0 +1,18 @@
+services:
+  codegraph:
+    build: .
+    container_name: codegraph-mcp
+    ports:
+      - "8811:8811"
+    environment:
+      CODEGRAPH_DB_PATH: /data/codegraph.db
+      CODEGRAPH_REPO_ROOT: /repos
+      CODEGRAPH_READ_ONLY: "false"
+      CODEGRAPH_ALLOW_EXTERNAL_REPOS: "false"
+      CODEGRAPH_ENABLE_DOCKER_LOGS: "false"
+      CODEGRAPH_MAX_FILE_BYTES: "1000000"
+    volumes:
+      - ./data:/data
+      - ./repos:/repos:ro
+      # Enable only when you want scoped docker-log inspection.
+      # - /var/run/docker.sock:/var/run/docker.sock:ro

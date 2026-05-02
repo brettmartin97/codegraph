@@ -1,0 +1,52 @@
+name: Bug report
+description: Report a problem or unexpected behaviour.
+labels: ['bug', 'triage']
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug, plus the expected behaviour.
+      placeholder: |
+        Steps to reproduce:
+        1. ...
+        2. ...
+        Expected: ...
+        Got: ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: CodeGraph version
+      description: Output of `codegraph --version` or the package version installed.
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Which surface?
+      multiple: true
+      options:
+        - CLI
+        - REST API
+        - MCP server
+        - VS Code extension
+        - GitHub Action
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: '3.11.7'
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      placeholder: 'Ubuntu 22.04 / macOS 14 / Windows 11'
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / traceback
+      render: shell
