@@ -58,7 +58,7 @@ jobs:
           echo "comment_file=/tmp/codegraph-comment.md" >> "$GITHUB_OUTPUT"
 
       - name: Post PR comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
