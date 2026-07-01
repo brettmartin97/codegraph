@@ -20,7 +20,7 @@ jobs:
           python-version: "3.11"
 
       - name: Restore CodeGraph DB
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.codegraph
           key: codegraph-nightly-${{ github.repository }}-${{ github.sha }}
